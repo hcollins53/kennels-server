@@ -1,0 +1,7 @@
+{
+    "python.formatting.autopep8Path": "/home/hgcollins/.local/share/virtualenvs/kennels-server-9AR7lo2p/bin/autopep8",
+    "python.linting.pylintEnabled": true,
+    "python.analysis.diagnosticSeverityOverrides": {
+      "reportGeneralTypeIssues": "none"
+    }
+ }
