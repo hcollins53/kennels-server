@@ -3,7 +3,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from views import get_all_animals, get_single_animal, get_all_locations, get_single_location
 from views import get_single_customer, get_all_customers, create_location, create_customer
 from views import get_all_employees, get_single_employee, create_animal, create_employee
-from views import delete_animal, delete_customer, delete_employee, delete_location
+from views import delete_animal, delete_employee, delete_location
 from views import update_animal, update_customer, update_employee, update_location
 # Here's a class. It inherits from another class.
 # For now, think of a class as a container for functions that
@@ -43,28 +43,35 @@ class HandleRequests(BaseHTTPRequestHandler):
     # Here's a method on the class that overrides the parent's method.
     # It handles any GET request.
     def do_GET(self):
-        self._set_headers(200)
-        response = {}  # Default response
-
+        "get"
+        response = {}
+        # Default response
         # Parse the URL and capture the tuple that is returned
         (resource, id) = self.parse_url(self.path)
-
         if resource == "animals":
             if id is not None:
                 response = get_single_animal(id)
+                if response is not None:
+                    self._set_headers(200)
+                else:
+                    self._set_headers(404)
             else:
+                self._set_headers(200)
                 response = get_all_animals()
         if resource == "locations":
+            self._set_headers(200)
             if id is not None:
                 response = get_single_location(id)
             else:
                 response = get_all_locations()
         if resource == "employees":
+            self._set_headers(200)
             if id is not None:
                 response = get_single_employee(id)
             else:
                 response = get_all_employees()
         if resource == "customers":
+            self._set_headers(200)
             if id is not None:
                 response = get_single_customer(id)
             else:
@@ -74,6 +81,7 @@ class HandleRequests(BaseHTTPRequestHandler):
     # Here's a method on the class that overrides the parent's method.
     # It handles any POST request.
     def do_POST(self):
+        "create"
         self._set_headers(201)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
@@ -95,7 +103,12 @@ class HandleRequests(BaseHTTPRequestHandler):
         # Encode the new animal and send in response
         self.wfile.write(json.dumps(new_animal).encode())
         if resource == "locations":
-            new_location = create_location(post_body)
+            if "name" in post_body and "address" in post_body:
+                self._set_headers(201)
+                new_location = create_location(post_body)
+            else:
+                self._set_headers(404)
+                new_location = {"message": f'{"name is required" if "name" not in post_body else ""} {"address is required" if "address" not in post_body else ""}'}
         self.wfile.write(json.dumps(new_location).encode())
         if resource == "employees":
             new_employee = create_employee(post_body)
@@ -105,25 +118,33 @@ class HandleRequests(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(new_customer).encode())
     # A method that handles any PUT request.
     def do_DELETE(self):
+        "delete"
     # Set a 204 response code
-        self._set_headers(204)
-
     # Parse the URL
         (resource, id) = self.parse_url(self.path)
 
     # Delete a single animal from the list
         if resource == "animals":
+            self._set_headers(204)
             delete_animal(id)
-        if resource == "locations":
+        elif resource == "locations":
+            self._set_headers(204)
             delete_location(id)
-        if resource == "employees":
+        elif resource == "employees":
+            self._set_headers(204)
             delete_employee(id)
-        if resource == "customers":
-            delete_customer(id)
+        elif resource == "customers":
+            self._set_headers(405)
+            response = {"message": f"Deleting customers is not allowed here"}
+          
     # Encode the new animal and send in response
-        self.wfile.write("".encode())
+        if response is not None:
+            self.wfile.write(json.dumps(response).encode())
+        else:
+            self.wfile.write("".encode())
 
     def do_PUT(self):
+        "update"
         self._set_headers(204)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
