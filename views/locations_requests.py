@@ -28,8 +28,11 @@ def get_all_locations():
         SELECT
             l.id,
             l.name,
-            l.address
+            l.address, 
+            COUNT(*) as animals
         FROM location l
+        JOIN Animal a ON a.location_id = l.id 
+        GROUP BY a.location_id
         """)
 
         # Initialize an empty list to hold all animal representations
@@ -76,41 +79,49 @@ def get_single_location(id):
         return location.__dict__
 
 def create_location(location):
-    # Get the id value of the last animal in the list
-    max_id = LOCATIONS[-1]["id"]
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        db_cursor = conn.cursor()
 
-    # Add 1 to whatever that number is
-    new_id = max_id + 1
+        db_cursor.execute("""
+        INSERT INTO Location
+            ( name, address )
+        VALUES
+            ( ?, ?);
+        """, (location['name'], location['address'], ))
+        id = db_cursor.lastrowid
+        location['id'] = id
 
-    # Add an `id` property to the animal dictionary
-    location["id"] = new_id
 
-    # Add the animal dictionary to the list
-    LOCATIONS.append(location)
-
-    # Return the dictionary with `id` property added
     return location
 
 def delete_location(id):
-    # Initial -1 value for location index, in case one isn't found
-    location_index = -1
+   with sqlite3.connect("./kennel.sqlite3") as conn:
+        db_cursor = conn.cursor()
 
-    # Iterate the locationS list, but use enumerate() so that you
-    # can access the index value of each item
-    for index, location in enumerate(LOCATIONS):
-        if location["id"] == id:
-            # Found the location. Store the current index.
-            location_index = index
-
-    # If the location was found, use pop(int) to remove it from list
-    if location_index >= 0:
-        LOCATIONS.pop(location_index)
+        db_cursor.execute("""
+        DELETE FROM Location
+        WHERE id = ?
+        """, (id, ))
  
 def update_location(id, new_location):
-    # Iterate the locationS list, but use enumerate() so that
-    # you can access the index value of each item.
-    for index, location in enumerate(LOCATIONS):
-        if location["id"] == id:
-            # Found the location. Update the value.
-            LOCATIONS[index] = new_location
-            break
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        UPDATE Location
+            SET
+            name = ?,
+            address = ?
+        WHERE id = ?
+        """, (new_location['name'], new_location['address'], id, ))
+
+        # Were any rows affected?
+        # Did the client send an `id` that exists?
+        rows_affected = db_cursor.rowcount
+
+    if rows_affected == 0:
+        # Forces 404 response by main module
+        return False
+    else:
+        # Forces 204 response by main module
+        return True 

@@ -88,3 +88,64 @@ JOIN Location l
 
 
 SELECT * FROM Animal ORDER BY id DESC;
+
+ALTER TABLE Location
+ADD Animals INTEGER;
+
+
+        SELECT
+            l.id,
+            l.name,
+            l.address, 
+            COUNT(*) as Animals
+        FROM location l
+        JOIN Animal a ON a.location_id = l.id 
+        GROUP BY a.location_id
+
+CREATE TABLE `AnimalsAssignedtoEmployee` (
+    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    `employee_id`  INTEGER NOT NULL,
+	`animal_id` INTEGER NOT NULL,
+    FOREIGN KEY(`employee_id`) REFERENCES `Employee`(`id`),
+	FOREIGN KEY(`animal_id`) REFERENCES `Animal`(`id`)
+); 
+
+INSERT INTO `AnimalsAssignedtoEmployee` VALUES (null, 1, 1);
+INSERT INTO `AnimalsAssignedtoEmployee` VALUES (null, 1, 2);
+INSERT INTO `AnimalsAssignedtoEmployee` VALUES (null, 2, 3);
+INSERT INTO `AnimalsAssignedtoEmployee` VALUES (null, 4, 4);
+INSERT INTO `AnimalsAssignedtoEmployee` VALUES (null, 4, 5);
+
+
+        SELECT DISTINCT
+            e.id,
+            e.name,
+            e.address,
+            e.location_id,
+            l.name location_name,
+            l.address location_address,
+            (
+           SELECT GROUP_CONCAT(a.id)
+            FROM AnimalsAssignedtoEmployee t
+            JOIN Animal a ON t.animal_id = a.id
+            WHERE t.employee_id = e.id) as animals_assigned
+            FROM Employee e
+            JOIN Location l
+                ON l.id = e.location_id
+            LEFT OUTER JOIN AnimalsAssignedtoEmployee t
+                    ON t.employee_id = e.id
+            LEFT OUTER JOIN Animal a
+                    ON t.animal_id = a.id
+            WHERE e.id = 1
+
+                     SELECT
+            e.id,
+            e.name,
+            e.address,
+            e.location_id,
+            l.name location_name,
+            l.address location_address
+        FROM employee e
+        JOIN location l
+            ON l.id = e.location_id
+        """)
