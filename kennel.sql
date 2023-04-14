@@ -138,14 +138,38 @@ INSERT INTO `AnimalsAssignedtoEmployee` VALUES (null, 4, 5);
                     ON t.animal_id = a.id
             WHERE e.id = 1
 
-                     SELECT
-            e.id,
-            e.name,
-            e.address,
-            e.location_id,
+SELECT DISTINCT
+            l.id,
+            l.name,
+            l.address,
+            (
+        SELECT GROUP_CONCAT(a.name) 
+            FROM Animal a 
+            WHERE a.location_id = l.id
+            ) as assigned_animals,
+            (
+        SELECT GROUP_CONCAT(e.name)
+            FROM Employee e
+            WHERE e.location_id = l.id
+            ) as assigned_employeese
+        FROM location l
+        JOIN Animal a 
+            ON a.location_id = l.id
+        JOIN Employee e 
+            ON e.location_id = l.id
+        WHERE l.id = 1
+
+        SELECT
+            a.id,
+            a.name,
+            a.breed,
+            a.status,
+            a.location_id,
+            a.customer_id,
             l.name location_name,
-            l.address location_address
-        FROM employee e
-        JOIN location l
-            ON l.id = e.location_id
-        """)
+            c.name customer_name
+        FROM animal a
+        JOIN Location l ON a.location_id = l.id
+        JOIN Customer c ON a.customer_id = c.id
+        WHERE a.id = 1
+        

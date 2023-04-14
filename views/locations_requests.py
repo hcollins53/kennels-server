@@ -1,6 +1,6 @@
 import sqlite3
 import json
-from models import Location
+from models import Location, Animal, Employee
 
 LOCATIONS = [
     {
@@ -62,11 +62,25 @@ def get_single_location(id):
         # Use a ? parameter to inject a variable's value
         # into the SQL statement.
         db_cursor.execute("""
-        SELECT
+        SELECT DISTINCT
             l.id,
             l.name,
-            l.address
+            l.address,
+            (
+        SELECT GROUP_CONCAT(a.name) 
+            FROM Animal a 
+            WHERE a.location_id = l.id
+            ) as assigned_animals,
+            (
+        SELECT GROUP_CONCAT(e.name)
+            FROM Employee e
+            WHERE e.location_id = l.id
+            ) as assigned_employees
         FROM location l
+        JOIN Animal a 
+            ON a.location_id = l.id
+        JOIN Employee e 
+            ON e.location_id = l.id
         WHERE l.id = ?
         """, ( id, ))
 
@@ -75,7 +89,16 @@ def get_single_location(id):
 
         # Create an location instance from the current row
         location = Location(data['id'], data['name'], data['address'])
-
+        animals_assigned = data['assigned_animals'].split(',') if data['assigned_animals'] else []
+        animals = []
+        for animal in animals_assigned:
+            animals.append(animal)
+        employees_assigned = data['assigned_employees'].split(',') if data['assigned_employees'] else []
+        employees = []
+        for employee in employees_assigned:
+            employees.append(employee)
+        location.animals = animals
+        location.employees = employees
         return location.__dict__
 
 def create_location(location):
